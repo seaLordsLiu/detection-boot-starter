@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.sealord</groupId>
+    <artifactId>detection-boot-starter</artifactId>
+    <version>0.1.0-SNAPSHOT</version>
+
+    <properties>
+        <detection-core.version>${project.version}</detection-core.version>
+        <jackjson.version>2.15.2</jackjson.version>
+        <cglib.version>3.3.0</cglib.version>
+
+        <maven.compiler.source>8</maven.compiler.source>
+        <maven.compiler.target>8</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <dependencyManagement>
+        <!-- 定义Spring版本信息 -->
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-dependencies</artifactId>
+                <version>2.7.18</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+
+
+        <dependency>
+            <groupId>org.sealord</groupId>
+            <artifactId>detection-core</artifactId>
+            <version>${detection-core.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-webmvc</artifactId>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-core</artifactId>
+            <scope>compile</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>tomcat-annotations-api</artifactId>
+                    <groupId>org.apache.tomcat</groupId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+
+    <!-- maven中央仓库会要求我们在上传jar到同时，必须同步发布对应到Javadoc、source、asc(利用gpg生成到校验)，所以需要在maven中添加以下构建插件 -->
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
+            <!-- 生成java source.jar -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.sonatype.plugins</groupId>-->
+<!--                <artifactId>nexus-staging-maven-plugin</artifactId>-->
+<!--                <version>1.6.13</version>-->
+<!--                <extensions>true</extensions>-->
+<!--                <configuration>-->
+<!--                    <serverId>ossrh</serverId>-->
+<!--                    <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>-->
+<!--                    <autoReleaseAfterClose>true</autoReleaseAfterClose>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.apache.maven.plugins</groupId>-->
+            <!--                <artifactId>maven-gpg-plugin</artifactId>-->
+            <!--                <version>3.0.1</version>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>sign-artifacts</id>-->
+            <!--                        <phase>verify</phase>-->
+            <!--                        <goals>-->
+            <!--                            <goal>sign</goal>-->
+            <!--                        </goals>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
+            <!--            <plugin>-->
+            <!--                <groupId>org.apache.maven.plugins</groupId>-->
+            <!--                <artifactId>maven-javadoc-plugin</artifactId>-->
+            <!--                <version>3.4.1</version>-->
+            <!--                <configuration>-->
+            <!--                    <failOnError>false</failOnError>-->
+            <!--                </configuration>-->
+            <!--                <executions>-->
+            <!--                    <execution>-->
+            <!--                        <id>attach-javadocs</id>-->
+            <!--                        <goals>-->
+            <!--                            <goal>jar</goal>-->
+            <!--                        </goals>-->
+            <!--                    </execution>-->
+            <!--                </executions>-->
+            <!--            </plugin>-->
+        </plugins>
+    </build>
+
+    <!-- 构件执行deploy命令时，发布到的目的库,根据版本号是否以-SNAPSHOT结束来判断 -->
+    <distributionManagement>
+        <!-- 项目正式库 -->
+        <repository>
+            <id>nexus</id>
+            <name>nexus-releases</name>
+            <url>http://101.34.206.121:13801/repository/maven-releases/</url>
+        </repository>
+
+        <!-- 代码快照版本库（版本号以SNAPSHOT结尾的构件） -->
+        <snapshotRepository>
+            <id>nexus</id>
+            <name>nexus-snapshots</name>
+            <url>http://101.34.206.121:13801/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <repositories>
+        <!-- 私服 -->
+        <repository>
+            <id>nexus</id>
+            <url>http://101.34.206.121:13801/repository/maven-public/</url>
+        </repository>
+    </repositories>
+</project>
