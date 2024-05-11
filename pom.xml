@@ -49,7 +49,7 @@
 
 
         <dependency>
-            <groupId>org.sealord</groupId>
+            <groupId>io.github.sealordsliu</groupId>
             <artifactId>detection-core</artifactId>
             <version>${detection-core.version}</version>
             <scope>compile</scope>
