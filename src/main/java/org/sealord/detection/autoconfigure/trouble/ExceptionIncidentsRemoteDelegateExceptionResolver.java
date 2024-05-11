@@ -1,6 +1,5 @@
 package org.sealord.detection.autoconfigure.trouble;
 
-import lombok.Getter;
 import org.sealord.client.trouble.TroubleClient;
 import org.sealord.config.Configuration;
 import org.slf4j.Logger;
@@ -18,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
  * 自定义的话，在功能划分上是最清晰的，也不会侵入其他业务组件
  * 注意：自定义的异常处理器需要在 {@link org.springframework.web.servlet.handler.HandlerExceptionResolverComposite} 中注册，并且需要在 {@link org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver} 之前执行
  * @author liu xw
- * @date 2024 04-20
+ * @since 2024 04-20
  */
 public class ExceptionIncidentsRemoteDelegateExceptionResolver implements HandlerExceptionResolver {
 
@@ -27,13 +26,11 @@ public class ExceptionIncidentsRemoteDelegateExceptionResolver implements Handle
     /**
      * 配置信息
      */
-    @Getter
     private final Configuration configuration;
 
     /**
      * 故障客户端
      */
-    @Getter
     private final TroubleClient troubleClient;
 
 
@@ -51,5 +48,13 @@ public class ExceptionIncidentsRemoteDelegateExceptionResolver implements Handle
         }
         // 必须要为NULL，才会被其他的异常处理器处理
         return null;
+    }
+
+    public Configuration getConfiguration() {
+        return configuration;
+    }
+
+    public TroubleClient getTroubleClient() {
+        return troubleClient;
     }
 }

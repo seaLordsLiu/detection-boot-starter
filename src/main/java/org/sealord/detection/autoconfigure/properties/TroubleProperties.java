@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * 故障参数设置
  * @author liu xw
- * @date 2024 04-20
+ * @since 2024 04-20
  */
 public class TroubleProperties {
 

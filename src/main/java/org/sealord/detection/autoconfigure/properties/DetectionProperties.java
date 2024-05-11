@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 /**
  * 参数设置
  * @author liu xw
- * @date 2024 04-20
+ * @since  2024 04-20
  */
 @ConfigurationProperties(prefix = "org.sealord.detection")
 public class DetectionProperties {

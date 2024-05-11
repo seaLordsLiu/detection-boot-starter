@@ -1,7 +1,5 @@
 package org.sealord.detection.autoconfigure;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.sealord.client.trouble.TroubleClient;
 import org.sealord.client.trouble.TroubleClientTemplate;
@@ -23,7 +21,7 @@ import java.util.List;
 
 /**
  * @author liu xw
- * @date 2024 04-26
+ * @since 2024 04-26
  */
 @AutoConfiguration
 @AutoConfigureAfter(DetectionAutoConfiguration.class)
@@ -49,15 +47,17 @@ public class TroubleAutoConfiguration {
     /**
      * 通过 WebMvcConfigurer 注入异常处理器
      */
-    @RequiredArgsConstructor
     public static class HandlerExceptionResolverBeanPostProcessor implements BeanPostProcessor {
 
         /**
          * 异常处理器
          */
-        @Getter
         @NonNull
         private final HandlerExceptionResolver extendHandlerExceptionResolver;
+
+        public HandlerExceptionResolverBeanPostProcessor(@NonNull HandlerExceptionResolver extendHandlerExceptionResolver) {
+            this.extendHandlerExceptionResolver = extendHandlerExceptionResolver;
+        }
 
         @Override
         public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {

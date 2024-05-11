@@ -21,7 +21,7 @@ import java.util.*;
 /**
  * detection自动装配程序
  * @author liu xw
- * @date 2024 04-20
+ * @since 2024 04-20
  */
 @AutoConfiguration
 @EnableConfigurationProperties(DetectionProperties.class)
