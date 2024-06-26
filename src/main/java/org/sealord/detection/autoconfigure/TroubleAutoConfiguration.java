@@ -1,80 +1,91 @@
 package org.sealord.detection.autoconfigure;
 
 import org.apache.commons.collections4.CollectionUtils;
-import org.sealord.client.trouble.TroubleClient;
-import org.sealord.client.trouble.TroubleClientTemplate;
-import org.sealord.config.Configuration;
 import org.sealord.detection.autoconfigure.trouble.ExceptionIncidentsRemoteDelegateExceptionResolver;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.sealord.trouble.DefaultTroubleManage;
+import org.sealord.trouble.SimpleTroubleContentGenerator;
+import org.sealord.trouble.TroubleManage;
+import org.sealord.trouble.delegate.HttpTroubleDelegate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.annotation.Bean;
-import org.springframework.lang.NonNull;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 import org.springframework.web.servlet.handler.HandlerExceptionResolverComposite;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author liu xw
  * @since 2024 04-26
  */
-@AutoConfiguration
-@AutoConfigureAfter(DetectionAutoConfiguration.class)
+@AutoConfiguration(after = DetectionAutoConfiguration.class)
 public class TroubleAutoConfiguration {
 
+    private static final Logger log = LoggerFactory.getLogger(TroubleAutoConfiguration.class);
+
     @Bean
-    @ConditionalOnMissingBean(TroubleClient.class)
-    public TroubleClient troubleProperties(Configuration configuration){
-        return new TroubleClientTemplate(configuration);
+    @ConditionalOnMissingBean(TroubleManage.class)
+    public TroubleManage troubleManage(){
+        // 需要先加载过滤器的执行策略
+        return this.defaultTroubleManage();
+    }
+
+    @Bean
+    public ApplicationListener<ContextRefreshedEvent> troubleHandlerExceptionResolverCompositeApplication(TroubleManage troubleManage){
+        return new TroubleHandlerExceptionResolverCompositeApplication(troubleManage);
     }
 
     /**
-     * web端检测
-     * @param configuration 配置信息
+     * 构造 TroubleManage 管理中心
+     * @return 结果
      */
-    @Bean
-    @ConditionalOnBean(TroubleClient.class)
-    public BeanPostProcessor troubleExceptionResolver(Configuration configuration, TroubleClient troubleClient){
-        ExceptionIncidentsRemoteDelegateExceptionResolver exceptionResolver = new ExceptionIncidentsRemoteDelegateExceptionResolver(configuration, troubleClient);
-        return new HandlerExceptionResolverBeanPostProcessor(exceptionResolver);
+    private TroubleManage defaultTroubleManage(){
+        SimpleTroubleContentGenerator troubleContentGenerator = new SimpleTroubleContentGenerator();
+        HttpTroubleDelegate troubleDelegate = new HttpTroubleDelegate();
+        return new DefaultTroubleManage(troubleContentGenerator, troubleDelegate, Collections.emptyList());
     }
 
     /**
-     * 通过 WebMvcConfigurer 注入异常处理器
+     * 配置容器加载完成后的监听事件
      */
-    public static class HandlerExceptionResolverBeanPostProcessor implements BeanPostProcessor {
+    public static class TroubleHandlerExceptionResolverCompositeApplication implements ApplicationListener<ContextRefreshedEvent> {
 
         /**
          * 异常处理器
          */
-        @NonNull
-        private final HandlerExceptionResolver extendHandlerExceptionResolver;
+        private final ExceptionIncidentsRemoteDelegateExceptionResolver exceptionResolver;
 
-        public HandlerExceptionResolverBeanPostProcessor(@NonNull HandlerExceptionResolver extendHandlerExceptionResolver) {
-            this.extendHandlerExceptionResolver = extendHandlerExceptionResolver;
+        public TroubleHandlerExceptionResolverCompositeApplication(TroubleManage troubleManage) {
+            this.exceptionResolver = new ExceptionIncidentsRemoteDelegateExceptionResolver(troubleManage);
         }
 
         @Override
-        public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-            if (bean instanceof HandlerExceptionResolverComposite){
-                // 异常处理器处理器
-                HandlerExceptionResolverComposite composite = (HandlerExceptionResolverComposite) bean;
-                List<HandlerExceptionResolver> exceptionResolvers = new ArrayList<>();
-                // 自定义处理器
-                exceptionResolvers.add(extendHandlerExceptionResolver);
-                // 添加原有处理器
-                List<HandlerExceptionResolver> existExceptionResolvers = composite.getExceptionResolvers();
-                if (CollectionUtils.isNotEmpty(existExceptionResolvers)){
-                    exceptionResolvers.addAll(existExceptionResolvers);
-                }
-                composite.setExceptionResolvers(exceptionResolvers);
+        public void onApplicationEvent(ContextRefreshedEvent event) {
+            ApplicationContext context = event.getApplicationContext();
+            // 异常处理器处理器
+            HandlerExceptionResolverComposite handlerExceptionResolverComposite = context.getBean(HandlerExceptionResolverComposite.class);
+            List<HandlerExceptionResolver> oldHandlerExceptionResolvers = handlerExceptionResolverComposite.getExceptionResolvers();
+
+            // 配置上报的异常处理器
+            List<HandlerExceptionResolver> newHandlerExceptionResolvers = new ArrayList<>(oldHandlerExceptionResolvers.size() + 1);
+            // 自定义处理器
+            newHandlerExceptionResolvers.add(exceptionResolver);
+            if (CollectionUtils.isNotEmpty(oldHandlerExceptionResolvers)){
+                newHandlerExceptionResolvers.addAll(oldHandlerExceptionResolvers);
             }
-            return BeanPostProcessor.super.postProcessAfterInitialization(bean, beanName);
+            handlerExceptionResolverComposite.setExceptionResolvers(newHandlerExceptionResolvers);
+            newHandlerExceptionResolvers.stream().map(HandlerExceptionResolver::getClass).map(Class::getSimpleName)
+                .forEach(name -> log.info("自定义异常解析器完成, 解析器信息: [{}]", name));
         }
     }
 

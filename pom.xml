@@ -6,9 +6,9 @@
 
     <groupId>io.github.sealordsliu</groupId>
     <artifactId>detection-boot-starter</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <url>https://github.com/seaLordsLiu/detection-boot-starter</url>
-    <description>一个不完美的服务</description>
+    <description>一个尽力做完美的服务</description>
 
     <properties>
         <detection-core.version>${project.version}</detection-core.version>

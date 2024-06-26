@@ -1,7 +1,7 @@
 package org.sealord.detection.autoconfigure.trouble;
 
-import org.sealord.client.trouble.TroubleClient;
-import org.sealord.config.Configuration;
+import org.sealord.Configuration;
+import org.sealord.trouble.TroubleManage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.servlet.HandlerExceptionResolver;
@@ -24,25 +24,19 @@ public class ExceptionIncidentsRemoteDelegateExceptionResolver implements Handle
     private final static Logger log = LoggerFactory.getLogger(ExceptionIncidentsRemoteDelegateExceptionResolver.class);
 
     /**
-     * 配置信息
-     */
-    private final Configuration configuration;
-
-    /**
      * 故障客户端
      */
-    private final TroubleClient troubleClient;
+    private final TroubleManage troubleManage;
 
 
-    public ExceptionIncidentsRemoteDelegateExceptionResolver(Configuration configuration, TroubleClient troubleClient) {
-        this.configuration = configuration;
-        this.troubleClient = troubleClient;
+    public ExceptionIncidentsRemoteDelegateExceptionResolver(TroubleManage troubleClient) {
+        this.troubleManage = troubleClient;
     }
 
     public ModelAndView resolveException(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
         // 远程异常处理 - 最好可以有异步执行, 减少对主业务的影响
         try {
-            troubleClient.reportTrouble(ex, request);
+            troubleManage.trouble(ex, request);
         }catch (Exception e){
             log.error("report trouble error. request url: {}", request.getRequestURI(), e);
         }
@@ -50,11 +44,7 @@ public class ExceptionIncidentsRemoteDelegateExceptionResolver implements Handle
         return null;
     }
 
-    public Configuration getConfiguration() {
-        return configuration;
-    }
-
-    public TroubleClient getTroubleClient() {
-        return troubleClient;
+    public TroubleManage getTroubleClient() {
+        return troubleManage;
     }
 }
